@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PGVCL Power Outage Poster Generator (1080x1920)</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Vadodara:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Hind Vadodara', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Left Side Control Panel */
+        .control-panel {
+            flex: 1;
+            min-width: 320px;
+            max-width: 400px;
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            height: fit-content;
+            max-height: 95vh;
+            overflow-y: auto;
+        }
+        .control-panel h2 {
+            margin-top: 0;
+            color: #003366;
+            font-size: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #444;
+            font-size: 14px;
+        }
+        .form-group label.checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .form-group label.checkbox-label input {
+            width: auto;
+            margin: 0;
+            cursor: pointer;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        .checkbox-pool {
+            max-height: 140px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 6px;
+            background: #fafafa;
+            margin-top: 5px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            cursor: pointer;
+        }
+        .checkbox-item input {
+            width: auto;
+            cursor: pointer;
+        }
+        .time-input-field {
+            letter-spacing: 1px;
+            font-weight: 600;
+            text-align: center;
+        }
+        .btn-group {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            transition: background 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        .btn-image { background-color: #2e7d32; }
+        .btn-image:hover { background-color: #1b5e20; }
+
+        /* Right Side Preview Panel - Smart Scaling Viewport */
+        .preview-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .preview-title {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 10px;
+        }
+        
+        /* 1080x1920 Aspect Responsive Preview Box */
+        .preview-window {
+            width: 450px;
+            height: 800px;
+            border: 4px solid #003366;
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.25);
+            background: #ffffff;
+        }
+
+        /* EXACT 1080x1920 CANVAS (Scaled perfectly in live layout, captured at 1:1) */
+        .poster-wrapper {
+            width: 1080px;
+            height: 1920px;
+            background-color: #ffffff;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: scale(0.416666); /* Scale 1080 down to 450px */
+            transform-origin: top left;
+            display: flex;
+            flex-direction: column;
+            border-top: 16px solid #d9232d;
+        }
+        
+        /* High Res Watermark Pattern */
+        .poster-wrapper::before {
+            content: "";
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            width: 600px;
+            height: 600px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="5" y="5" width="90" height="90" rx="24" fill="%23D11374" opacity="0.02"/><path d="M 28 36 L 72 20 L 48 50 L 72 43 L 28 80 L 46 50 Z" fill="%23D11374" opacity="0.035"/></svg>');
+            background-size: contain;
+            background-repeat: no-repeat;
+            pointer-events: none;
+        }
+        
+        /* Header Scaled for 1080px */
+        .header {
+            background-color: rgba(0, 34, 68, 0.98);
+            color: #ffffff;
+            padding: 35px 40px;
+            text-align: center;
+            border-bottom: 6px solid #ffcc00;
+        }
+        .header-text h1 { font-size: 38px; color: #ffcc00; margin: 0; font-weight: 800; letter-spacing: 1px; }
+        .header-text h2 { font-size: 24px; margin: 10px 0 0 0; font-weight: 400; letter-spacing: 0.8px; opacity: 0.9; }
+        
+        /* Dynamic Flex Content to distribute elements cleanly over 1920px height */
+        .content { 
+            padding: 50px 55px; 
+            background: transparent; 
+            position: relative; 
+            z-index: 1; 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+        }
+        .text-center { text-align: center; }
+        
+        .alert-badge {
+            display: inline-block;
+            background-color: #d9232d;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            font-size: 24px;
+            letter-spacing: 0.5px;
+        }
+        .main-title {
+            color: #003366; 
+            margin: 0 0 20px 0; 
+            font-size: 36px;
+            font-weight: 700;
+            line-height: 1.5;
+        }
+        
+        /* Robust Scaled Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 20px 30px;
+            margin: 20px 0;
+            background-color: #f8f9fa;
+            padding: 35px;
+            border-radius: 14px;
+            border-left: 10px solid #003366;
+            font-size: 28px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
+            align-items: center;
+        }
+        
+        .info-label { 
+            font-weight: 700; 
+            color: #555; 
+            display: flex;
+            justify-content: space-between;
+        }
+        .info-label::after { content: ":"; font-weight: bold; }
+        
+        .big-bold-text { 
+            font-weight: 800; 
+            color: #003366; 
+            font-size: 32px; 
+            letter-spacing: 0.5px;
+            line-height: 1.5;
+        }
+        .duration-highlight { font-weight: 600; color: #222; font-size: 28px; }
+        .duration-badge { color: #003366; font-size: 24px; font-weight: bold; margin-left: 12px; }
+        
+        /* High Visibility Timeline */
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #eef5ff;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
+            font-weight: bold;
+            border: 4px dashed #003366;
+            font-size: 26px;
+        }
+        .time-box { text-align: center; color: #d9232d; font-size: 32px; flex: 1; display: flex; flex-direction: column; align-items: center; }
+        .time-box-on { color: #2e7d32; }
+        .time-subtext { font-size: 20px; color: #555; font-weight: normal; margin-top: 4px; }
+        .timeline-center { flex: 1; font-size: 24px; color: #333; display: flex; justify-content: center; align-items: center; text-align: center; }
+        
+        /* Large Safety Note Box */
+        .note-box {
+            background-color: #fff8e1;
+            border: 2px solid #ffcc00;
+            padding: 25px;
+            border-radius: 12px;
+            font-size: 24px;
+            text-align: left;
+            line-height: 1.6;
+        }
+        .note-title { font-weight: bold; color: #d84315; margin-bottom: 8px; font-size: 26px; }
+        
+        .authority-sign { text-align: right; margin-top: 25px; font-size: 28px; font-weight: 700; color: #003366; }
+        .phone-container { margin-top: 20px; font-weight: bold; font-size: 26px; color: #003366; border-bottom: 2px dashed #ccc; padding-bottom: 25px; }
+        .phone-highlight { color: #d9232d; font-size: 30px; }
+        
+        /* 1080px Optimized Twin Advertisement Layout */
+        .adv-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 25px;
+        }
+        
+        .adv-card {
+            border-radius: 14px;
+            padding: 24px;
+            font-size: 21px;
+            line-height: 1.5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+        
+        .meter-card { background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%); border: 2px solid #90caf9; }
+        .meter-card h4 { margin: 0 0 15px 0; color: #0d47a1; font-size: 24px; font-weight: 800; border-bottom: 2px solid #bbdefb; padding-bottom: 8px; }
+        
+        .safety-card { background: linear-gradient(135deg, #fbe9e7 0%, #ffffff 100%); border: 2px solid #ffab91; }
+        .safety-card h4 { margin: 0 0 15px 0; color: #b71c1c; font-size: 24px; font-weight: 800; border-bottom: 2px solid #ffccbc; padding-bottom: 8px; }
+        
+        .adv-list { list-style: none; padding: 0; margin: 0; }
+        .adv-list li { margin-bottom: 12px; display: flex; align-items: flex-start; gap: 12px; color: #222; font-weight: 600; }
+        .adv-list li span.icon { font-size: 24px; flex-shrink: 0; }
+
+        /* Footer Bottom Anchor */
+        .footer {
+            background-color: #002244;
+            color: #ffffff;
+            padding: 25px;
+            text-align: center;
+            font-size: 26px;
+            font-weight: 600;
+            border-top: 6px solid #ffcc00;
+        }
+
+        #lbl-areas { font-size: 28px; color: #000000 !important; font-weight: 600; white-space: pre-wrap; line-height: 1.5; }
+        #lbl-reason { font-size: 28px; color: #000000 !important; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <div class="control-panel">
+        <h2>Poster Details ભરો</h2>
+        
+        <div class="form-group">
+            <label for="input-subdivision">Sub-Division:</label>
+            <select id="input-subdivision" oninput="handleSubdivisionChange()">
+                <option value="PGVCL વિરપુર ગ્રામ્ય">PGVCL વિરપુર ગ્રામ્ય</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="input-feeder">Feeder Name (ફીડરનું નામ):</label>
+            <input type="text" id="input-feeder" value="" oninput="updatePoster()" placeholder="અહીં જાતે લખો અથવા નીચેથી સિલેક્ટ કરો">
+            
+            <div id="feeder-list-section" style="display:none; margin-top: 8px;">
+                <label style="font-size: 12px; color: #666;">એકસાથે એકથી વધુ ફીડર સિલેક્ટ કરો:</label>
+                <div id="feeder-checkbox-container" class="checkbox-pool"></div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="input-areas">અસરગ્રસ્ત ગામ/વિસ્તારો (Areas):</label>
+            <textarea id="input-areas" oninput="updatePoster()" placeholder="ગામ કે સોસાયટીના નામ લખો..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="input-reason">કામગીરીનું કારણ (Reason):</label>
+            <select id="input-reason" oninput="updatePoster()">
+                <option value="લાઇન ક્લિયરન્સ અને સુરક્ષા મેન્ટનન્સ કામગીરી.">લાઇન ક્લિયરન્સ અને મેન્ટનન્સ</option>
+                <option value="પ્રી-મોન્સૂન (ચોમાસા પૂર્વેની) મેન્ટનન્સ કામગીરી.">પ્રી-મોન્સૂન મેન્ટનન્સ</option>
+                <option value="નવા વીજ થાંભલા અને લાઈન શિફ્ટિંગની કામગીરી.">થાંભલા/લાઈન શિફ્ટિંગ</option>
+                <option value="11KV લાઈન અને ટ્રાન્સફોર્મર રિપેરિંગ કામગીરી.">ટ્રાન્સફોર્મર રિપેરિંગ</option>
+                <option value="સબસ્ટેશન રિપેરિંગ અને તાકીદની કામગીરી.">સબસ્ટેશન રિપેરિંગ</option>
+                <option value="ટ્રાન્સફોર્મર બદલવાની કામગીરી માટે.">ટ્રાન્સફોર્મર બદલવા માટે</option>
+                <option value="GETCO આઉટેજ કામગીરી.">GETCO Outage</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="input-date">Date:</label>
+            <input type="date" id="input-date" oninput="updatePoster()">
+        </div>
+
+        <div class="form-group">
+            <label for="input-start-time">Power Off Time:</label>
+            <input type="text" id="input-start-time" class="time-input-field" value="08:00" placeholder="HH:MM" maxlength="5" oninput="handleTimeTyping(this)">
+        </div>
+
+        <div class="form-group">
+            <label for="input-end-time">Power On Time:</label>
+            <input type="text" id="input-end-time" class="time-input-field" value="13:30" placeholder="HH:MM" maxlength="5" oninput="handleTimeTyping(this)">
+        </div>
+
+        <div class="form-group">
+            <label for="input-authority">અધિકારીનો હોદ્દો:</label>
+            <input type="text" id="input-authority" value="નાયબ ઇજનેરશ્રી, PGVCL" oninput="updatePoster()">
+        </div>
+
+        <div class="form-group">
+            <label for="input-phone">Fault Center Number:</label>
+            <input type="text" id="input-phone" value="9274396063" oninput="updatePoster()">
+        </div>
+
+        <div class="form-group" style="background: #e3f2fd; padding: 10px; border-radius: 8px; border: 1px solid #90caf9;">
+            <label class="checkbox-label" style="color:#0d47a1;">
+                <input type="checkbox" id="chk-sm1" checked onchange="updatePoster()"> 💡 સ્માર્ટ મીટર લખાણ-૧ બતાવો
+            </label>
+            <input type="text" id="input-sm1" value="સવારે ૧૧ થી સાંજે ૫ સુધી વપરાશ પર યુનિટ દીઠ ₹૦.૬૦ નું આકર્ષક ડિસ્કાઉન્ટ મેળવો." oninput="updatePoster()">
+            
+            <label class="checkbox-label" style="color:#0d47a1; margin-top: 10px;">
+                <input type="checkbox" id="chk-sm2" checked onchange="updatePoster()"> 💡 સ્માર્ટ મીટર લખાણ-૨ બતાવો
+            </label>
+            <input type="text" id="input-sm2" value="મોબાઈલ એપ્લિકેશન દ્વારા રોજિંદા વીજ વપરાશનું લાઈવ અને સચોટ ટ્રેકિંગ." oninput="updatePoster()">
+        </div>
+
+        <div class="form-group" style="background: #fbe9e7; padding: 10px; border-radius: 8px; border: 1px solid #ffab91;">
+            <label class="checkbox-label" style="color:#b71c1c;">
+                <input type="checkbox" id="chk-sf1" checked onchange="updatePoster()"> 🌧️ ચોમાસુ સુરક્ષા લખાણ-૧ બતાવો
+            </label>
+            <input type="text" id="input-sf1" value="તૂટેલા કે લટકતા વીજ વાયરો તથા વીજ થાંભલાઓથી હંમેશા સુરક્ષિત અંતર જાળવો." oninput="updatePoster()">
+            
+            <label class="checkbox-label" style="color:#b71c1c; margin-top: 10px;">
+                <input type="checkbox" id="chk-sf2" checked onchange="updatePoster()"> 🌧️ ચોમાસુ સુરક્ષા લખાણ-૨ બતાવો
+            </label>
+            <input type="text" id="input-sf2" value="ભેજવાળા વાતાવરણમાં ભીના હાથે ઘરના સ્વિચ બોર્ડ કે વીજ સાધનોને અડશો નહીં." oninput="updatePoster()">
+        </div>
+
+        <div class="btn-group">
+            <button id="btn-image" class="btn btn-image" onclick="downloadAsImage()">Download HD Image (1080x1920)</button>
+        </div>
+    </div>
+
+    <div class="preview-panel">
+        <div class="preview-title">Live Preview Window (HD 1080x1920):</div>
+        
+        <div class="preview-window">
+            <div id="poster-card" class="poster-wrapper">
+                <div class="header">
+                    <div class="header-text">
+                        <h1>પશ્ચિમ ગુજરાત વિજ કંપની લિમિટેડ (PGVCL)</h1>
+                        <h2>સત્તાવાર વીજ નિભાવણી પત્રક (Official Maintenance Notice)</h2>
+                    </div>
+                </div>
+
+                <div class="content">
+                    <div class="text-center">
+                        <div class="alert-badge">પાવર કાપ એલર્ટ ♦ <span id="lbl-subdivision-badge">PGVCL વિરપુર ગ્રામ્ય</span></div>
+                        <h3 class="main-title">પાવર સપ્લાય બંધ રહેવા અંગેની તાકીદની જાહેરાત</h3>
+                    </div>
+
+                    <div class="info-grid">
+                        <div class="info-label">Sub-Division</div>
+                        <div id="lbl-subdivision-main" class="big-bold-text">PGVCL વિરપુર ગ્રામ્ય</div>
+
+                        <div class="info-label">તારીખ</div>
+                        <div id="lbl-date" style="font-weight:600; color: #000;"></div>
+                        
+                        <div class="info-label">સમયગાળો</div>
+                        <div>
+                            <span id="lbl-duration-time" class="duration-highlight">સવારે 08:00 થી બપોરે 01:30</span>
+                            <span id="lbl-total-hours" class="duration-badge"></span>
+                        </div>
+
+                        <div class="info-label">અસરગ્રસ્ત ફીડર</div>
+                        <div><span id="lbl-feeder-title" class="big-bold-text">---</span></div>
+
+                        <div class="info-label" id="label-areas">અસરગ્રસ્ત વિસ્તારો</div>
+                        <div id="lbl-areas"></div>
+
+                        <div class="info-label">કામગીરી</div>
+                        <div id="lbl-reason">લાઇન ક્લિયરન્સ અને સુરક્ષા મેન્ટનન્સ કામગીરી.</div>
+                    </div>
+
+                    <div class="timeline">
+                        <div class="time-box">
+                            <span id="lbl-start-time">સવારે 08:00</span>
+                            <span class="time-subtext">વીજ પ્રવાહ બંધ</span>
+                        </div>
+                        <div class="timeline-center">⚙️ મેન્ટનન્સ કામગીરી ચાલુ</div>
+                        <div class="time-box time-box-on">
+                            <span id="lbl-end-time">બપોરે 01:30</span>
+                            <span class="time-subtext">પુનઃ શરૂ સમય</span>
+                        </div>
+                    </div>
+
+                    <div class="note-box">
+                        <div class="note-title">• ખાસ નોંધ:</div>
+                        <div>નિયત સમય પહેલાં કામગીરી પૂર્ણ થતાં વીજ પુરવઠો કોઈપણ પૂર્વસૂચના વગર પુનઃ સ્થાપિત કરવામાં આવી શકે છે. સહકાર આપવા નમ્ર વિનંતી.</div>
+                    </div>
+                    
+                    <div class="authority-sign" id="lbl-authority">નાયબ ઇજનેરશ્રી, PGVCL</div>
+                    
+                    <div class="text-center phone-container">
+                        📞 ફોલ્ટ સેન્ટર નંબર: <span id="lbl-phone" class="phone-highlight">9274396063</span>
+                    </div>
+
+                    <div class="adv-container" id="container-adv">
+                        <div class="adv-card meter-card" id="card-meter">
+                            <h4>📊 સ્માર્ટ મીટર અપનાવો - વધુ સુવિધા મેળવો</h4>
+                            <ul class="adv-list">
+                                <li id="li-sm1"><span class="icon">💰</span><span id="lbl-sm1"></span></li>
+                                <li id="li-sm2"><span class="icon">📱</span><span id="lbl-sm2"></span></li>
+                            </ul>
+                        </div>
+
+                        <div class="adv-card safety-card" id="card-safety">
+                            <h4>⚠️ SAFETY FIRST - ચોમાસુ સુરક્ષા લિસ્ટ</h4>
+                            <ul class="adv-list">
+                                <li id="li-sf1"><span class="icon">🛑</span><span id="lbl-sf1"></span></li>
+                                <li id="li-sf2"><span class="icon">💦</span><span id="lbl-sf2"></span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="footer">
+                    <span id="lbl-subdivision-footer">PGVCL વિરપુર ગ્રામ્ય</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const gujaratiMonths = ["જાન્યુઆરી", "ફેબ્રુઆરી", "માર્ચ", "એપ્રિલ", "મે", "જૂન", "જુલાઈ", "ઑગસ્ટ", "સપ્ટેમ્બર", "ઓક્ટોબર", "નવેમ્બર", "ડિસેમ્બર"];
+        const virpurFeeders = ["જેતપુર AG", "અમરનગર AG", "સકરોળા JGY", "દેવડા AG", "ડેરડી (જે) JGY", "ભંડારીયા AG", "ત્રાકુડા JGY", "ગારનાળા AG", "ઉમરાળી AG", "અંબરડી AG", "કાગવડ AG", "ચરાખડી AG", "પ્રેમગઢ AG", "મેવાસા AG", "પીઠડીયા JGY", "જાલીયા AG", "વીરપુર JGY", "રંગપર AG", "મોનપર AG", "ચાપરવાડી AG", "કેરલેશ્વર AG", "રાબડીકા JGY", "જેપુર JGY", "વાલાડુંગરા JGY", "જ્યોતિ AG", "શિવ AG", "કિશન AG", "બોઝ AG", "હનુમાન AG", "ખોડલધામ JGY", "હેવન JGY", "ખાંભલીડા AG", "ધ્રુફણીયા AG", "અહબા AG", "માસીતાળા AG", "માણેક JGY", "શેહઝોન સ્ટીલ IND", "ખોડલ JGY", "વાડસડા JGY", "સ્ટેશન વાવડી AG", "ચરાણીયા AG", "ખારેશ્વર AG", "જામણાવડ AG", "ખીરસરા AG", "દેવાળકી AG", "નારાયણ AG", "પુંજાલપીર AG"];
+
+        function handleSubdivisionChange() {
+            const subdivision = document.getElementById('input-subdivision').value;
+            const checkboxContainer = document.getElementById('feeder-checkbox-container');
+            const feederListSection = document.getElementById('feeder-list-section');
+            checkboxContainer.innerHTML = '';
+            
+            if (subdivision === "PGVCL વિરપુર ગ્રામ્ય") {
+                feederListSection.style.display = "block";
+                virpurFeeders.forEach((feeder, index) => {
+                    const labelWrap = document.createElement('label');
+                    labelWrap.className = 'checkbox-item';
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = feeder;
+                    checkbox.className = 'feeder-checkbox';
+                    checkbox.onchange = updateFeedersFromCheckboxes;
+                    const span = document.createElement('span');
+                    span.innerText = feeder;
+                    labelWrap.appendChild(checkbox);
+                    labelWrap.appendChild(span);
+                    checkboxContainer.appendChild(labelWrap);
+                });
+            } else {
+                feederListSection.style.display = "none";
+            }
+            updatePoster();
+        }
+
+        function updateFeedersFromCheckboxes() {
+            const checkboxes = document.querySelectorAll('.feeder-checkbox:checked');
+            const selectedFeeders = Array.from(checkboxes).map(cb => cb.value);
+            document.getElementById('input-feeder').value = selectedFeeders.length > 0 ? selectedFeeders.join(', ') : '';
+            updatePoster();
+        }
+
+        function handleTimeTyping(input) {
+            let value = input.value.replace(/[^0-9]/g, '');
+            if (value.length > 2) value = value.slice(0, 2) + ':' + value.slice(2, 4);
+            input.value = value;
+            updatePoster();
+        }
+
+        function formatGujaratiTime(timeStr) {
+            if (!timeStr || !timeStr.includes(':')) return "00:00";
+            let [hoursStr, minutesStr] = timeStr.split(':');
+            let hours = parseInt(hoursStr) || 0;
+            let minutes = minutesStr || "00";
+            if (hours > 23) hours = 23;
+            if (parseInt(minutes) > 59) minutes = "59";
+            let period = (hours >= 4 && hours < 12) ? "સવારે" : (hours >= 12 && hours < 16) ? "બપોરે" : (hours >= 16 && hours < 20) ? "સાંજે" : "રાતે";
+            let displayHours = hours % 12 || 12;
+            return `${period} ${String(displayHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        }
+
+        function calculateDuration(start, end) {
+            if(!start || !end || start.length < 5 || end.length < 5) return "";
+            let startMins = start.split(':').map(Number).reduce((h, m) => h * 60 + m);
+            let endMins = end.split(':').map(Number).reduce((h, m) => h * 60 + m);
+            let diff = endMins - startMins;
+            if (diff < 0) diff += 1440;
+            let hours = Math.floor(diff / 60);
+            let mins = diff % 60;
+            return `(કુલ ${hours > 0 ? hours + ' કલાક ' : ''}${mins > 0 ? mins + ' મિનિટ' : ''})`;
+        }
+
+        function updatePoster() {
+            document.getElementById('lbl-subdivision-main').innerText = document.getElementById('input-subdivision').value;
+            document.getElementById('lbl-subdivision-badge').innerText = document.getElementById('input-subdivision').value;
+            document.getElementById('lbl-subdivision-footer').innerText = document.getElementById('input-subdivision').value;
+            document.getElementById('lbl-feeder-title').innerText = document.getElementById('input-feeder').value || "---";
+            document.getElementById('lbl-reason').innerText = document.getElementById('input-reason').value;
+            document.getElementById('lbl-authority').innerText = "- " + document.getElementById('input-authority').value;
+            document.getElementById('lbl-phone').innerText = document.getElementById('input-phone').value;
+            
+            // Text values
+            document.getElementById('lbl-sm1').innerText = document.getElementById('input-sm1').value;
+            document.getElementById('lbl-sm2').innerText = document.getElementById('input-sm2').value;
+            document.getElementById('lbl-sf1').innerText = document.getElementById('input-sf1').value;
+            document.getElementById('lbl-sf2').innerText = document.getElementById('input-sf2').value;
+
+            // Handle individual Visibility Checkboxes
+            const showSm1 = document.getElementById('chk-sm1').checked;
+            const showSm2 = document.getElementById('chk-sm2').checked;
+            const showSf1 = document.getElementById('chk-sf1').checked;
+            const showSf2 = document.getElementById('chk-sf2').checked;
+
+            document.getElementById('li-sm1').style.display = showSm1 ? 'flex' : 'none';
+            document.getElementById('li-sm2').style.display = showSm2 ? 'flex' : 'none';
+            document.getElementById('li-sf1').style.display = showSf1 ? 'flex' : 'none';
+            document.getElementById('li-sf2').style.display = showSf2 ? 'flex' : 'none';
+
+            // Show or hide Cards completely
+            const showMeterCard = (showSm1 || showSm2);
+            const showSafetyCard = (showSf1 || showSf2);
+
+            document.getElementById('card-meter').style.display = showMeterCard ? 'block' : 'none';
+            document.getElementById('card-safety').style.display = showSafetyCard ? 'block' : 'none';
+
+            // Adjust outer Grid container depending on selections
+            const advContainer = document.getElementById('container-adv');
+            if (!showMeterCard && !showSafetyCard) {
+                advContainer.style.display = 'none';
+            } else {
+                advContainer.style.display = 'grid';
+                if (showMeterCard && showSafetyCard) {
+                    advContainer.style.gridTemplateColumns = '1fr 1fr';
+                } else {
+                    advContainer.style.gridTemplateColumns = '1fr';
+                }
+            }
+
+            const areas = document.getElementById('input-areas').value.trim();
+            document.getElementById('label-areas').style.display = areas === "" ? "none" : "";
+            document.getElementById('lbl-areas').style.display = areas === "" ? "none" : "";
+            if(areas !== "") document.getElementById('lbl-areas').innerText = areas;
+
+            const rawDate = document.getElementById('input-date').value;
+            if(rawDate) {
+                const [year, month, day] = rawDate.split('-');
+                document.getElementById('lbl-date').innerText = `${parseInt(day)} ${gujaratiMonths[parseInt(month) - 1]} ${year}`;
+            }
+
+            const startTime = document.getElementById('input-start-time').value;
+            const endTime = document.getElementById('input-end-time').value;
+            document.getElementById('lbl-start-time').innerText = formatGujaratiTime(startTime);
+            document.getElementById('lbl-end-time').innerText = formatGujaratiTime(endTime);
+            
+            if(startTime.length >= 4 && endTime.length >= 4) {
+                document.getElementById('lbl-duration-time').innerText = `${formatGujaratiTime(startTime)} થી ${formatGujaratiTime(endTime)}`;
+                document.getElementById('lbl-total-hours').innerText = calculateDuration(startTime, endTime);
+            }
+        }
+
+        function downloadAsImage() {
+            const poster = document.getElementById('poster-card');
+            const btn = document.getElementById('btn-image');
+            btn.innerText = "Downloading HD Image...";
+            btn.disabled = true;
+            
+            document.fonts.ready.then(() => {
+                // scale: 2 multiplies resolution for crystal clear HD rendering
+                html2canvas(poster, { scale: 2, useCORS: true, allowTaint: false, logging: false }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = 'PGVCL_Outage_HD_1080x1920.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    btn.innerText = "Download HD Image (1080x1920)";
+                    btn.disabled = false;
+                }).catch(() => {
+                    btn.innerText = "Download HD Image (1080x1920)";
+                    btn.disabled = false;
+                });
+            });
+        }
+
+        window.onload = function() {
+            document.getElementById('input-date').value = new Date().toISOString().split('T')[0];
+            handleSubdivisionChange();
+        };
+    </script>
+</body>
+</html>
+
